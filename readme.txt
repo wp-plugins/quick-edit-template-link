@@ -1,5 +1,5 @@
 === Plugin Name ===
-Contributors: Quick Edit Template Link
+Contributors: ChubbyNinjaa
 Tags: admin, theme editor
 Requires at least: 3.0.1
 Tested up to: 4.0
