@@ -3,7 +3,7 @@
  * Plugin Name: Quick Edit Template Link
  * Plugin URI: http://www.chubbyninja.co.uk
  * Description: Displays the current template in the admin bar with a link directly to the template in theme editor (if the current user has access to it)
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Danny Hearnah - ChubbyNinja
  * Author URI: http://danny.hearnah.com
  * License: GPL2
