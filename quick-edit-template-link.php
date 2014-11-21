@@ -8,7 +8,7 @@
  * Author URI: http://danny.hearnah.com
  * License: GPL2
 
-    Copyright YEAR  PLUGIN_AUTHOR_NAME  (email : dan.hearnah@gmail.com)
+    Copyright 2014  DANNY HEARNAH  (email : dan.hearnah@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -63,4 +63,69 @@ function chubby_ninja_admin_bar_link()
 		'href' => $href,
 		'id' => 'edit-tpl'
 	));
+
+	$files =  get_included_files( );
+	$tpldir = get_template_directory( );
+
+	$incs = array( );
+
+	foreach( $files as $f=>$file )
+	{
+		if( !strstr( $file, '/wp-content/themes/' ) ) { continue; }
+		$file = end( explode( '/wp-content/', $file ) );
+
+		$n = end(explode( '/', $file, 2 ) );
+		$parts = explode('/',$n, 2 );
+
+		if( !isset( $incs[ $parts[0] ] ) )
+		{
+			$incs[ $parts[0] ] = array( );
+		}
+
+		$incs[ $parts[0] ][] = $parts[1];
+
+	}
+
+	$dropdowns = count( $incs );
+
+	foreach( $incs as $theme=>$files )
+	{
+
+		foreach( $files as $key=>$file )
+		{
+			$ddparent = 'edit-tpl';
+
+			if( $dropdowns > 1 )
+			{
+				$ddparent .= '-' . $theme;
+				if( !$key )
+				{
+					$wp_admin_bar->add_node( array(
+						'parent'=> 'edit-tpl',
+						'title' => $theme,
+						'href' => '#',
+						'id' => $ddparent
+					));
+				}
+			}
+
+			$href = '#';
+
+			if( current_user_can('edit_themes') )
+			{
+				$href = sprintf($url, $file, $theme );
+			}
+
+			// Add as a parent menu
+			$wp_admin_bar->add_node( array(
+				'parent'=> $ddparent,
+				'title' => $file,
+				'href' => $href,
+				'id' => 'edit-tpl-' . $theme . $key
+			));
+
+		}
+
+	}
+
 }
