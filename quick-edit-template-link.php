@@ -27,12 +27,19 @@
 
 defined('ABSPATH') or die("No direct access");
 
+function chubby_ninja_admin_bar_style()
+{
+	wp_register_style('quick-edit-template-link', plugin_dir_url( __FILE__ ) . 'css/quick_edit_template_link.css');
+	wp_enqueue_style( 'quick-edit-template-link' );
+}
+
 function chubby_ninja_admin_bar_init()
 {
 	if (!is_super_admin() || !is_admin_bar_showing() )
 	{
 		return;
 	}
+	add_action( 'wp_enqueue_scripts', 'chubby_ninja_admin_bar_style' );
 	add_action('admin_bar_menu', 'chubby_ninja_admin_bar_link', 500);
 }
 
@@ -42,7 +49,6 @@ add_action('admin_bar_init', 'chubby_ninja_admin_bar_init');
 function chubby_ninja_admin_bar_link()
 {
 	global $wp_admin_bar, $template;
-	
 
 	$href = '#';
 

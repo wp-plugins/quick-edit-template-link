@@ -3,7 +3,7 @@ Contributors: ChubbyNinjaa
 Tags: admin, theme editor
 Requires at least: 3.0.1
 Tested up to: 4.2
-Stable tag: 1.0.1
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,9 @@ They can see the name of the template in the admin bar, but they cannot click th
 1. screenshot-1.png
 
 == Changelog ==
+
+= 1.1 =
+* Fixed: Dropdown items missing when list too long for viewport
 
 = 1.0.1 =
 * Now shows a dropdown of all template includes, if you are using a parent and child theme combo it will nest them nicely by theme location

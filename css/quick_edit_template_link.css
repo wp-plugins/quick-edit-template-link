@@ -1,0 +1,4 @@
+#wp-admin-bar-edit-tpl .ab-sub-wrapper {
+    max-height: 90vh;
+    overflow-y: auto;
+}
