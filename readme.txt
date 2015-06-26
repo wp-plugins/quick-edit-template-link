@@ -28,6 +28,7 @@ They can see the name of the template in the admin bar, but they cannot click th
 
 == Screenshots ==
 
+1. screenshot-1.png
 
 == Changelog ==
 
