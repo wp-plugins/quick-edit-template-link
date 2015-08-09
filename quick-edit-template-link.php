@@ -35,7 +35,7 @@ function chubby_ninja_admin_bar_style()
 
 function chubby_ninja_admin_bar_init()
 {
-	if (!is_super_admin() || !is_admin_bar_showing() )
+	if (!is_super_admin() || !is_admin_bar_showing() || is_admin() )
 	{
 		return;
 	}
@@ -50,11 +50,14 @@ function chubby_ninja_admin_bar_link()
 {
 	global $wp_admin_bar, $template;
 
-	$href = '#';
+	$href = $url = '#';
 
-	$name = end( explode( '/wp-content/', $template ) );
-	
-	if( current_user_can( 'edit_themes' ) )
+    $explode_on = 'themes';
+    if( strstr( $template, '/wp-content/plugins/' ) ){ $explode_on = 'plugins'; }
+    $name = str_replace('/', ' &rarr; ', end( explode( '/wp-content/' . $explode_on . '/', $template ) ) );
+
+
+    if( current_user_can( 'edit_themes' ) )
 	{
 		$n = end(explode( '/', $name, 2 ) );
 		$parts = explode('/',$n, 2 );
@@ -65,73 +68,241 @@ function chubby_ninja_admin_bar_link()
 
 	// Add as a parent menu
 	$wp_admin_bar->add_node( array(
-		'title' => $name,
+		'title' => '<span class="ab-icon"></span>' . $name,
 		'href' => $href,
 		'id' => 'edit-tpl'
 	));
 
-	$files =  get_included_files( );
-	$tpldir = get_template_directory( );
 
-	$incs = array( );
+    $options = get_option( 'qetl_settings' );
 
-	foreach( $files as $f=>$file )
-	{
-		if( !strstr( $file, '/wp-content/themes/' ) ) { continue; }
-		$file = end( explode( '/wp-content/', $file ) );
+    if( empty( $options['qetl_max_recursive'] ) ) {
+        $options['qetl_max_recursive'] = 99;
+    }
 
-		$n = end(explode( '/', $file, 2 ) );
-		$parts = explode('/',$n, 2 );
+    addPart(parse_includes(),'edit-tpl',$url,0,$options['qetl_max_recursive']);
+}
 
-		if( !isset( $incs[ $parts[0] ] ) )
-		{
-			$incs[ $parts[0] ] = array( );
-		}
+$template = '';
+function addPart( $parts, $class, $url, $depth = 0,$max_depth = 99, $prepend_path = '', $type='' )
+{
 
-		$incs[ $parts[0] ][] = $parts[1];
+    global $wp_admin_bar, $template;
 
-	}
+    if( !is_array( $parts ) ) { return; }
+    if( $depth > $max_depth ) { return; }
 
-	$dropdowns = count( $incs );
+    foreach( $parts as $key=>$part ) {
 
-	foreach( $incs as $theme=>$files )
-	{
+        if( $depth == 0 ){ $type = $key;}
+        if( $depth == 1 ){ $template = $key; }
 
-		foreach( $files as $key=>$file )
-		{
-			$ddparent = 'edit-tpl';
+        $id = $class . '-' . $key;
 
-			if( $dropdowns > 1 )
-			{
-				$ddparent .= '-' . $theme;
-				if( !$key )
-				{
-					$wp_admin_bar->add_node( array(
-						'parent'=> 'edit-tpl',
-						'title' => $theme,
-						'href' => '#',
-						'id' => $ddparent
-					));
-				}
-			}
+        if (is_array($part)) {
 
-			$href = '#';
+            if( $depth >= 2 ){ $prepend_path .= $key . '/'; }
 
-			if( current_user_can('edit_themes') )
-			{
-				$href = sprintf($url, $file, $theme );
-			}
+            $wp_admin_bar->add_node(array(
+                'parent' => $class,
+                'title' => $key,
+                'href' => '#',
+                'id' => $id
+            ));
 
-			// Add as a parent menu
-			$wp_admin_bar->add_node( array(
-				'parent'=> $ddparent,
-				'title' => $file,
-				'href' => $href,
-				'id' => 'edit-tpl-' . $theme . $key
-			));
+            addPart($part, $id, $url, ($depth+1),$max_depth, $prepend_path, $type);
+        } else {
+            $href = '#';
 
-		}
+            if( current_user_can('edit_themes') && $type == 'themes' )
+            {
+                $_part = $prepend_path . $part;
+                $href = sprintf($url, $_part, $template );
+            }
 
-	}
+            // Add as a parent menu
+            $wp_admin_bar->add_node( array(
+                'parent'=> $class,
+                'title' => $part,
+                'href' => $href,
+                'id' => $id
+            ));
+        }
+
+    }
+}
+
+function pathToArray($path , $separator = '/') {
+    if (($pos = strpos($path, $separator)) === false) {
+        return array($path);
+    }
+    return array(substr($path, 0, $pos) => pathToArray(substr($path, $pos + 1)));
+}
+
+function parse_includes( )
+{
+
+    $options = get_option( 'qetl_settings' );
+
+    $files =  get_included_files( );
+
+    $incs = array( );
+
+    foreach( $files as $f=>$file )
+    {
+        if( !strstr( $file, '/wp-content/themes/' ) &&
+            !strstr( $file, '/wp-content/plugins/' ) ) { continue; }
+
+        if( empty($options['qetl_checkbox_plugins']) && strstr( $file, '/wp-content/plugins/' ) ) { continue; }
+
+        $file = end( explode( '/wp-content/', $file ) );
+
+        if( strstr($file, 'plugins' ) ){
+            $hash = md5( current( explode('/', str_replace('plugins/','',$file))) );
+            if( $options['qetl_exclude_plugin_' . $hash] ){ continue; }
+        }
+
+        $incs = array_merge_recursive($incs, pathToArray($file));
+    }
+
+    return $incs;
+}
+
+add_action( 'admin_menu', 'qetl_add_admin_menu' );
+add_action( 'admin_init', 'qetl_settings_init' );
+
+
+function qetl_add_admin_menu(  ) {
+
+    add_options_page( 'Quick Edit Template Link', 'Quick Edit Template Link', 'manage_options', 'quick_edit_template_link', 'quick_edit_template_link_options_page' );
+
+}
+
+
+function qetl_settings_init(  ) {
+
+    register_setting( 'pluginPage', 'qetl_settings' );
+
+
+    add_settings_section(
+        'qetl_pluginPage_section',
+        __( 'General', 'wordpress' ),
+        'qetl_settings_section_callback',
+        'pluginPage'
+    );
+
+    add_settings_section(
+        'qetl_pluginPage_section2',
+        __( 'Plugins', 'wordpress' ),
+        'qetl_settings_section2_callback',
+        'pluginPage'
+    );
+
+    add_settings_field(
+        'qetl_checkbox_plugins',
+        __( 'Show Plugins in Dropdown', 'wordpress' ),
+        'qetl_checkbox_field_0_render',
+        'pluginPage',
+        'qetl_pluginPage_section2'
+    );
+
+    add_settings_field(
+        'qetl_exclude_plugins',
+        __( 'Exclude From Dropdown', 'wordpress' ),
+        'qetl_checkbox_field_1_render',
+        'pluginPage',
+        'qetl_pluginPage_section2'
+    );
+
+    add_settings_field(
+        'qetl_exclude_plugins',
+        __( 'Maximum recursive depth', 'wordpress' ),
+        'qetl_textarea_field_0_render',
+        'pluginPage',
+        'qetl_pluginPage_section'
+    );
+
+
+}
+
+
+function qetl_checkbox_field_0_render(  ) {
+
+    $options = get_option( 'qetl_settings' );
+    ?>
+    <input type='checkbox' name='qetl_settings[qetl_checkbox_plugins]' <?php checked( $options['qetl_checkbox_plugins'], 1 ); ?> value='1'>
+<?php
+}
+
+function qetl_textarea_field_0_render(  ) {
+
+    $options = get_option( 'qetl_settings' );
+    ?>
+    <input type='textarea' name='qetl_settings[qetl_max_recursive]' value='<?=$options['qetl_max_recursive']?>'> (0 = unlimited)
+<?php
+}
+
+
+function qetl_checkbox_field_1_render(  ) {
+
+    $options = get_option( 'qetl_settings' );
+    $plugins = get_plugins();
+
+    foreach( $plugins as $key=>$val )
+    {
+        $hash = md5( current( explode('/', $key)) );
+        ?>
+        <input type='checkbox' name='qetl_settings[qetl_exclude_plugin_<?=$hash?>]' <?php checked( $options['qetl_exclude_plugin_' . $hash], 1 ); ?> value='1'>
+        <?=$val['Name']?><br>
+    <?php
+    }
+
+}
+
+
+function qetl_settings_section_callback(  ) {
+
+    echo __( 'This plugin appends the admin bar with a dropdown showing you what files are being included on that specific page', 'wordpress' );
+
+}
+
+
+function qetl_settings_section2_callback(  ) {
+
+    echo __( 'If you want to exclude specific plugins from the dropdown, select them here', 'wordpress' );
+
+}
+
+
+function quick_edit_template_link_options_page(  ) {
+
+    ?>
+    <form action='options.php' method='post'>
+        <div class="wrap">
+            <h1>Quick Edit Template Link</h1>
+
+            <div style="width:60%;float:left;">
+                <?php
+                settings_fields( 'pluginPage' );
+                do_settings_sections( 'pluginPage' );
+                submit_button();
+                ?>
+            </div>
+            <div style="width:35%;float:right;">
+                <h3>Advert</h3>
+                <p>This advert is to help contribute to development costs.</p>
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                <!-- Quick Edit Template Link -->
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:300px;height:600px"
+                     data-ad-client="ca-pub-4524739862142506"
+                     data-ad-slot="7190258734"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+    </form>
+<?php
 
 }

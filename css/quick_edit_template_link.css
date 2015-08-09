@@ -1,4 +1,15 @@
-#wp-admin-bar-edit-tpl .ab-sub-wrapper {
+
+#wpadminbar .ab-top-menu>.menupop#wp-admin-bar-edit-tpl .ab-sub-wrapper {
     max-height: 90vh;
-    overflow-y: auto;
+    min-width:10px;
+}
+
+#wpadminbar .quicklinks .menupop#wp-admin-bar-edit-tpl ul li .ab-item {
+    min-width:10px;
+}
+
+
+#wpadminbar .quicklinks .menupop#wp-admin-bar-edit-tpl .ab-icon::before {
+    content: "\f100";
+    top: 3px;
 }

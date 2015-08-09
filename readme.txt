@@ -1,25 +1,30 @@
 === Plugin Name ===
 Contributors: ChubbyNinjaa
-Tags: admin, theme editor
+Tags: admin, theme editor, templates, admin bar
 Requires at least: 3.0.1
-Tested up to: 4.2
-Stable tag: 1.1
+Tested up to: 4.3
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Displays the current templates being used in the admin bar with a link directly to the template in theme editor (if the current user has access to it)
+This plugin adds a handy link at the top of the admin bar giving you the ability to quickly see what theme template is being used, as well as what other files are being included, from themes and plugins.
+
+If the admin user has access to edit templates, they are provided with a link to the theme editor.
+
+
 
 == Description ==
 
-This plugin adds a handy link at the top of the admin bar showing you what template is currently being used. It also includes a dropdown of all the tempalte files being used in that post/page allowing you to click quickly into the theme editor and making the edits
+This plugin adds a handy link at the top of the admin bar giving you the ability to quickly see what theme template is being used, as well as what other files are being included, from themes and plugins.
 
-
-If you have access to edit templates it links to the theme editor with the current template selected for editing
+If the admin user has access to edit templates, they are provided with a link to the theme editor.
 
 
 == Installation ==
 
-There are no settings to configure, just install, activate and go to the front end of your website
+Just install and navigate to the front end of your website, you'll see a new part to the admin bar showing you the current template and included files.
+
+If you want to show the plugins, and/or exclude certain plugins from showing in this dropdown, go to your WP Dashboard, Settings > Quick Edit Template Link
 
 == Frequently Asked Questions ==
 
@@ -29,8 +34,18 @@ They can see the name of the template in the admin bar, but they cannot click th
 == Screenshots ==
 
 1. screenshot-1.png
+2. screenshot-2.png
+3. screenshot-3.png
 
 == Changelog ==
+
+= 2.0 =
+* New: Ability to see what plugin files are being included
+* New: Ability to navigate recursively through directories
+* New: Settings Page to exclude specific plugins from showing
+* New: Specify level of recursive in settings
+* Fixed: Plugin running while in the dashboard
+* Fixed: Overflow issues
 
 = 1.1 =
 * Fixed: Dropdown items missing when list too long for viewport
@@ -42,3 +57,5 @@ They can see the name of the template in the admin bar, but they cannot click th
 * Initial Release
 
 == Upgrade Notice ==
+
+Upgrade to get the ability to customize the plugin, plus bug fixes
