@@ -7,15 +7,13 @@ Stable tag: 2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-This plugin adds a handy link at the top of the admin bar giving you the ability to quickly see what theme template is being used, as well as what other files are being included, from themes and plugins.
-
-If the admin user has access to edit templates, they are provided with a link to the theme editor.
+Quickly find out what theme file(s) is currently being used (archive.php single.php..) with this handy Admin Bar dropdown
 
 
 
 == Description ==
 
-This plugin adds a handy link at the top of the admin bar giving you the ability to quickly see what theme template is being used, as well as what other files are being included, from themes and plugins.
+This plugin adds a handy link at the top of the admin bar giving you the ability to quickly see what theme template file(s) is being used, as well as what other files are being included, from themes and plugins.
 
 If the admin user has access to edit templates, they are provided with a link to the theme editor.
 
