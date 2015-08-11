@@ -1,5 +1,6 @@
 === Plugin Name ===
 Contributors: ChubbyNinjaa
+Donate Link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A66YW2BYEESFW
 Tags: admin, theme editor, templates, admin bar
 Requires at least: 3.0.1
 Tested up to: 4.3
