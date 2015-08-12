@@ -23,14 +23,19 @@ If the admin user has access to edit templates, they are provided with a link to
 
 == Installation ==
 
-The simplest way to install is to click on 'Plugins' then 'Add' and type 'Template Debugger' in the search field.
-Just install and navigate to the front end of your website, you'll see a new part to the admin bar showing you the current template and included files.
-If you want to show the plugins, and/or exclude certain plugins from showing in this dropdown, go to your WP Dashboard, Settings > Template Debugger
+The simplest way to install
+
+1. In your Wordpress Admin click on 'Plugins' then 'Add New'
+2. Type 'Template Debugger' in the search field.
+3. Navigate to the front end of your website, you'll see a new part to the admin bar showing you the current template and included files.
 
 Alternatively,
 
 1. Upload the plugin to the '/wp-content/plugins/' directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
+
+If you want to show the plugins, and/or exclude certain plugins from showing in this dropdown, go to your WP Dashboard, Settings > Template Debugger
+
 
 == Frequently Asked Questions ==
 
