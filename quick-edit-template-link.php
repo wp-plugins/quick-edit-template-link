@@ -3,7 +3,7 @@
  * Plugin Name: Template Debugger
  * Plugin URI: http://www.chubbyninja.co.uk
  * Description: A template debugger that helps you identify what template files are being used on the page you're viewing
- * Version: 2.0.1
+ * Version: 2.1.0
  * Author: Danny Hearnah - ChubbyNinjaa
  * Author URI: http://danny.hearnah.com
  * License: GPL2
@@ -207,8 +207,7 @@ function parse_includes() {
  */
 function qetl_add_admin_menu() {
 
-	add_options_page( 'Template Debugger', 'Template Debugger', 'manage_options', 'quick_edit_template_link', 'quick_edit_template_link_options_page' );
-
+	add_menu_page( 'Template Debugger', 'Template Debugger', 'manage_options', 'quick_edit_template_link', 'quick_edit_template_link_options_page' );
 }
 
 /**
@@ -218,19 +217,155 @@ function qetl_settings_init() {
 
 	register_setting( 'pluginPage', 'qetl_settings' );
 
-
 	add_settings_section( 'qetl_pluginPage_section', __( 'General', 'wordpress' ), 'qetl_settings_section_callback', 'pluginPage' );
-
 	add_settings_section( 'qetl_pluginPage_section2', __( 'Plugins', 'wordpress' ), 'qetl_settings_section2_callback', 'pluginPage' );
 
 	add_settings_field( 'qetl_checkbox_plugins', __( 'Show Plugins in Dropdown', 'wordpress' ), 'qetl_checkbox_field_0_render', 'pluginPage', 'qetl_pluginPage_section2' );
-
 	add_settings_field( 'qetl_exclude_plugins', __( 'Exclude From Dropdown', 'wordpress' ), 'qetl_checkbox_field_1_render', 'pluginPage', 'qetl_pluginPage_section2' );
-
 	add_settings_field( 'qetl_exclude_plugins', __( 'Maximum recursive depth', 'wordpress' ), 'qetl_textarea_field_0_render', 'pluginPage', 'qetl_pluginPage_section' );
 
+	add_settings_section( 'qetl_pluginPage_child', __( '', 'wordpress' ), 'qetl_pluginPage_child_callback', 'childTheme' );
+	add_settings_field( 'qetl_select_theme', __( 'Select Parent Theme', 'wordpress' ), 'qetl_select_render', 'childTheme', 'qetl_pluginPage_child' );
+	add_settings_field( 'qetl_theme_name1', __( 'Child Theme Name', 'wordpress' ), 'qetl_text_child_name_render', 'childTheme', 'qetl_pluginPage_child' );
+	add_settings_field( 'qetl_theme_name2', __( 'Author Name', 'wordpress' ), 'qetl_text_child_author_render', 'childTheme', 'qetl_pluginPage_child' );
+	add_settings_field( 'qetl_theme_name3', __( 'Author URI', 'wordpress' ), 'qetl_text_child_author_uri_render', 'childTheme', 'qetl_pluginPage_child' );
+	add_settings_field( 'qetl_theme_name4', __( 'Child Theme Version', 'wordpress' ), 'qetl_text_child_version_render', 'childTheme', 'qetl_pluginPage_child' );
+
+	qetl_check_form_action();
+}
+
+$qetl_error = $qetl_success = false;
+function qetl_check_form_action()
+{
+    global $qetl_error,$qetl_success;
+	if( !isset($_POST['action']) ){
+		return;
+	}
+	if( $_POST['action'] != 'qetl_generate_child'){
+		return;
+	}
+
+	// lets create the child theme
+	$parent = $_POST['qetl_parent_theme'];
+	$name = $_POST['qetl_child_name'];
+	$slug = sanitize_title( $name );
+	$author = $_POST['qetl_child_author'];
+	$author_uri = $_POST['qetl_child_author_uri'];
+	$version = $_POST['qetl_child_version'];
+
+	if(
+	    empty( $parent ) ||
+	    empty( $name ) ||
+	    empty( $author ) ||
+	    empty( $version )
+	    ) {
+            $qetl_error = new WP_Error( 'broke', __( "The parent theme, name, author and version must not be blank", "my_textdomain" ) );
+            return;
+	    }
+
+	$ph = array(
+        '$name',
+        '$uri',
+        '$author_uri',
+        '$author',
+        '$parent',
+        '$version'
+	);
+	$live = array(
+        $name,
+        '',
+        $author_uri,
+        $author,
+        $parent,
+        $version
+	);
+
+	$root = get_theme_root();
+	$path = $root . '/' . $slug;
+
+
+	if( is_dir( $path ) )
+	{
+	    $path .= '_' .wp_generate_password(5, false);
+	}
+
+	$ok = wp_mkdir_p( $path );
+	if( !$ok )
+	{
+	    $qetl_error = new WP_Error( 'broke', __( "I could not create your theme directory, please make sure " . $root . " is writable", "my_textdomain" ) );
+		return;
+	}
+
+
+    // create default files
+	$default_functions = file_get_contents(__DIR__ . '/admin/functions.php');
+	$functions = str_replace( $ph, $live, $default_functions );
+	$fp = fopen( $path . '/functions.php', 'w');
+	fwrite($fp, $functions);
+	fclose($fp);
+
+	$default_css = file_get_contents(__DIR__ . '/admin/style.css');
+	$css = str_replace( $ph, $live, $default_css );
+	$fp = fopen( $path . '/style.css', 'w');
+	fwrite($fp, $css);
+	fclose($fp);
+
+	$qetl_success = true;
 
 }
+
+function qetl_pluginPage_child_callback() {}
+
+/**
+ *
+ */
+function qetl_select_render() {
+	$theme_list = wp_get_themes();
+	?>
+	<select name="qetl_parent_theme" id="">
+		<option value="">Select Theme</option>
+		<?php
+		foreach( $theme_list as $theme_slug=>$theme__ )
+		{
+			$theme = wp_get_theme( $theme_slug );
+			if( $theme->get('Template') ) { continue; }
+			?>
+			<option value="<?=$theme_slug?>" <?=((isset($_POST['qetl_parent_theme'])) ? ' selected=selected ' : NULL)?> ><?=$theme->get( 'Name' )?></option>
+			<?php
+		}
+		?>
+	</select>
+	<?php
+}
+
+function qetl_text_child_name_render() {
+	?>
+	<input type='text' name='qetl_child_name' value="<?=((isset($_POST['qetl_child_name'])) ? $_POST['qetl_child_name'] : NULL)?>">
+	<?php
+}
+
+function qetl_text_child_author_render() {
+
+	$current_user = wp_get_current_user();
+	?>
+	<input type='text' name='qetl_child_author' value="<?=((isset($_POST['qetl_child_name'])) ? $_POST['qetl_child_author'] : $current_user->display_name)?>">
+	<?php
+}
+
+function qetl_text_child_author_uri_render() {
+	?>
+	<input type='text' name='qetl_child_author_uri' value="<?=((isset($_POST['qetl_child_name'])) ? $_POST['qetl_child_author_uri'] : NULL)?>">
+	<?php
+}
+
+function qetl_text_child_version_render() {
+	?>
+	<input type='text' name='qetl_child_version' value="<?=((isset($_POST['qetl_child_name'])) ? $_POST['qetl_child_version'] : '1.0.0')?>">
+	<?php
+}
+
+
+
 
 /**
  *
@@ -295,8 +430,13 @@ function qetl_settings_section2_callback() {
  */
 function quick_edit_template_link_options_page() {
 
+	$active_tab = 'general';
+
+	if( isset($_GET['tab'] ) )
+	{
+		$active_tab = $_GET['tab'];
+	}
 	?>
-	<form action='options.php' method='post'>
 		<div class="wrap">
 			<h1>Template Debugger</h1>
 
@@ -306,10 +446,37 @@ function quick_edit_template_link_options_page() {
 			   plugin.</p>
 
 			<div style="width:60%;float:left;">
+
+				<h2 class="nav-tab-wrapper">
+					<a class="nav-tab <?=(($active_tab == 'general') ? 'nav-tab-active' : NULL)?>" href="admin.php?page=quick_edit_template_link"><?php esc_attr_e('General'); ?></a>
+					<a class="nav-tab <?=(($active_tab == 'child_theme') ? 'nav-tab-active' : NULL)?>" href="admin.php?page=quick_edit_template_link&tab=child_theme"><?php esc_attr_e('Create a Child Theme'); ?></a>
+				</h2>
+
 				<?php
-				settings_fields( 'pluginPage' );
-				do_settings_sections( 'pluginPage' );
-				submit_button();
+				switch($active_tab)
+				{
+					case 'general':
+					?>
+					<form action='options.php' method='post'>
+					<?php
+						settings_fields( 'pluginPage' );
+						do_settings_sections( 'pluginPage' );
+						submit_button();
+						?>
+					</form>
+						<?php
+						break;
+
+					case 'child_theme':
+						doThemeCreateForm();
+						break;
+
+					default:
+						settings_fields( 'pluginPage' );
+						do_settings_sections( 'pluginPage' );
+						submit_button();
+				}
+
 				?>
 			</div>
 			<div style="width:35%;float:right;">
@@ -332,6 +499,54 @@ function quick_edit_template_link_options_page() {
 	<?php
 
 }
+
+
+function doThemeCreateForm()
+{
+	?>
+	<p>When you download a theme and want to modify it, you should always do so in a child theme, this ensures your changes are not lost when the theme is updated by the author.</p>
+
+	<p>Using the form below, you can easily create the child theme</p>
+
+    <?php
+    global $qetl_error, $qetl_success;
+    if( is_wp_error( $qetl_error ) ) {
+        ?>
+        <div id="" class="error">
+            <p><?=$qetl_error->get_error_message()?></p>
+        </div>
+        <div style="border-left:solid 4px #f90000; background-color:#fff; box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);">
+            <p style="margin: 0;padding: 13px 17px;"><?=$qetl_error->get_error_message()?></p>
+        </div>
+        <?php
+    }
+
+    if( $qetl_success )
+    {
+    ?>
+        <div id="" class="updated">
+            <p>Your Child theme has been created, head over to <a href="<?=admin_url('themes.php')?>">Themes</a> to activate it</p>
+        </div>
+        <div id="" style="border-left:solid 4px #7ad03a; background-color:#fff; box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);">
+            <p style="margin: 0;padding: 13px 17px;">Your Child theme has been created, head over to <a href="<?=admin_url('themes.php')?>">Themes</a> to activate it</p>
+        </div>
+        <p style="font-weight: bold;">If this has made your life easier, please spare me a minute to <a href="https://wordpress.org/support/view/plugin-reviews/quick-edit-template-link" target="_blank">Rate &amp;
+				                                                                                     Review</a> the
+			   plugin.</p>
+    <?php
+    } else {
+    ?>
+        <form action="" method="post">
+        <input type="hidden" name="action" value="qetl_generate_child">
+        <?php
+            do_settings_sections( 'childTheme' );
+            submit_button('Create Child Theme');
+        ?>
+        </form>
+        <?php
+	}
+}
+
 
 add_action( 'admin_bar_init', 'chubby_ninja_admin_bar_init' );
 add_action( 'admin_menu', 'qetl_add_admin_menu' );
