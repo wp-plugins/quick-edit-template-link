@@ -3,7 +3,7 @@
  * Plugin Name: Template Debugger
  * Plugin URI: http://www.chubbyninja.co.uk
  * Description: A template debugger that helps you identify what template files are being used on the page you're viewing
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author: Danny Hearnah - ChubbyNinjaa
  * Author URI: http://danny.hearnah.com
  * License: GPL2
@@ -26,7 +26,7 @@
 
 defined( 'ABSPATH' ) or die( "No direct access" );
 
-$qetl_current_template = '';
+$qetl_current_template = $qetl_main_template = '';
 
 /**
  *
@@ -51,7 +51,7 @@ function chubby_ninja_admin_bar_init() {
  *
  */
 function chubby_ninja_admin_bar_link() {
-	global $wp_admin_bar, $template;
+	global $wp_admin_bar, $template, $qetl_main_template;
 
 	$href = $url = '#';
 
@@ -59,7 +59,10 @@ function chubby_ninja_admin_bar_link() {
 	if ( strstr( $template, '/wp-content/plugins/' ) ) {
 		$explode_on = 'plugins';
 	}
-	$name = str_replace( '/', ' &rarr; ', end( explode( '/wp-content/' . $explode_on . '/', $template ) ) );
+	$qetl_main_template = end( explode( '/wp-content/' . $explode_on . '/', $template ) );
+	$name = str_replace( '/', ' &rarr; ', $qetl_main_template );
+
+	$qetl_main_template = end( explode('/', $qetl_main_template ) );
 
 
 	if ( current_user_can( 'edit_themes' ) ) {
@@ -99,7 +102,7 @@ function chubby_ninja_admin_bar_link() {
  */
 function addPart( $parts, $class, $url, $depth = 0, $max_depth = 99, $prepend_path = '', $type = '' ) {
 
-	global $wp_admin_bar, $qetl_current_template;
+	global $wp_admin_bar, $qetl_current_template, $qetl_main_template;
 
 	if ( ! is_array( $parts ) ) {
 		return;
@@ -122,7 +125,7 @@ function addPart( $parts, $class, $url, $depth = 0, $max_depth = 99, $prepend_pa
 		if ( is_array( $part ) ) {
 
 			if ( $depth >= 2 ) {
-				$prepend_path .= $key . '/';
+				$current_prepend_path = $prepend_path . $key . '/';
 			}
 
 			$wp_admin_bar->add_node( array(
@@ -132,8 +135,10 @@ function addPart( $parts, $class, $url, $depth = 0, $max_depth = 99, $prepend_pa
 				'id'     => $id
 			) );
 
-			addPart( $part, $id, $url, ( $depth + 1 ), $max_depth, $prepend_path, $type );
+			addPart( $part, $id, $url, ( $depth + 1 ), $max_depth, $current_prepend_path, $type );
+
 		} else {
+
 			$href = '#';
 
 			if ( current_user_can( 'edit_themes' ) && $type == 'themes' ) {
@@ -141,7 +146,12 @@ function addPart( $parts, $class, $url, $depth = 0, $max_depth = 99, $prepend_pa
 				$href  = sprintf( $url, $_part, $qetl_current_template );
 			}
 
-			// Add as a parent menu
+
+			if( $part == $qetl_main_template )
+			{
+				$part = '* ' . $part;
+			}
+
 			$wp_admin_bar->add_node( array(
 				'parent' => $class,
 				'title'  => $part,
@@ -151,6 +161,7 @@ function addPart( $parts, $class, $url, $depth = 0, $max_depth = 99, $prepend_pa
 		}
 
 	}
+
 }
 
 /**

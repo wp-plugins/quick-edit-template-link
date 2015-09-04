@@ -4,7 +4,7 @@ Donate Link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: admin, theme editor, templates, admin bar, debug, debugger, child theme, generator
 Requires at least: 3.0.1
 Tested up to: 4.3
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,6 +51,10 @@ They can see the name of the template in the admin bar, but they cannot click th
 
 == Changelog ==
 
+= 2.1.1 =
+* New: Current template file highlighted with an asterisks (*)
+* Fixed: Link to theme editor broken
+
 = 2.1.0 =
 * New: You can now generate a child theme inside Template Debugger
 * Fixed: Missing minified CSS file
@@ -80,4 +84,4 @@ They can see the name of the template in the admin bar, but they cannot click th
 * Initial Release
 
 == Upgrade Notice ==
-Upgrade get the latest features
+Upgrade to fix broken theme editor link
